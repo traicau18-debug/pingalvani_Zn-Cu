@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mô phỏng Pin Galvani Zn-Cu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .btn-transition { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .animate-pulse-slow { animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen p-4 flex items-center justify-center">
+
+    <div class="max-w-4xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-800 to-indigo-900 p-6 text-white text-center">
+            <h1 class="text-2xl md:text-3xl font-extrabold flex items-center justify-center gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-400 fill-yellow-400"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                Mô phỏng pin Galvani (Zn – Cu)
+            </h1>
+            <p class="opacity-80 text-sm mt-2 font-medium italic">Thiết Kế: Nguyễn Mạnh Hưng</p>
+        </div>
+
+        <!-- Simulation Area -->
+        <div class="relative p-4 bg-white min-h-[520px]">
+            <svg id="simulation-svg" viewBox="0 0 800 520" class="w-full h-full drop-shadow-sm">
+                <!-- Cầu muối -->
+                <path d="M 280 250 L 280 180 Q 280 130 330 130 L 470 130 Q 520 130 520 180 L 520 250" fill="none" stroke="#f1f5f9" stroke-width="45" stroke-linecap="round" />
+                <path d="M 280 255 L 280 180 Q 280 130 330 130 L 470 130 Q 520 130 520 180 L 520 255" fill="none" stroke="#cbd5e1" stroke-width="38" stroke-linecap="round" stroke-dasharray="6,6" opacity="0.4" />
+                
+                <!-- Nhãn Cầu muối KCl - Nằm dưới cầu muối -->
+                <text x="400" y="175" text-anchor="middle" class="text-[10px] font-bold fill-slate-300 uppercase tracking-[0.2em]">Cầu muối (potassium chloride)</text>
+
+                <!-- Ions in Salt Bridge -->
+                <g id="bridge-ions" class="hidden">
+                    <circle r="6" fill="#f43f5e">
+                        <animateMotion path="M 450 130 L 330 130 Q 280 130 280 180 L 280 250" dur="5s" repeatCount="indefinite" />
+                    </circle>
+                    <text class="text-[8px] fill-white font-bold" text-anchor="middle" dy=".3em">Cl⁻<animateMotion path="M 450 130 L 330 130 Q 280 130 280 180 L 280 250" dur="5s" repeatCount="indefinite" /></text>
+                    
+                    <circle r="6" fill="#10b981">
+                        <animateMotion path="M 350 130 L 470 130 Q 520 130 520 180 L 520 250" dur="5s" repeatCount="indefinite" />
+                    </circle>
+                    <text class="text-[8px] fill-white font-bold" text-anchor="middle" dy=".3em">K⁺<animateMotion path="M 350 130 L 470 130 Q 520 130 520 180 L 520 250" dur="5s" repeatCount="indefinite" /></text>
+                </g>
+
+                <!-- Beakers -->
+                <g>
+                    <path d="M 100 200 L 100 390 Q 100 400 110 400 L 310 400 Q 320 400 320 390 L 320 200" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
+                    <path d="M 102 260 L 102 388 Q 102 398 112 398 L 308 398 Q 318 398 318 388 L 318 260 Z" fill="#e0f2fe" opacity="0.6" />
+                    <text x="210" y="380" text-anchor="middle" class="text-[10px] font-bold fill-blue-600/60 italic tracking-wider">ZnSO₄ 1M</text>
+
+                    <path d="M 480 200 L 480 390 Q 480 400 490 400 L 690 400 Q 700 400 700 390 L 700 200" fill="#f8fafc" stroke="#e2e8f0" stroke-width="2" />
+                    <path d="M 482 260 L 482 388 Q 482 398 492 398 L 688 398 Q 698 398 698 388 L 698 260 Z" fill="#3b82f6" opacity="0.25" />
+                    <text x="590" y="380" text-anchor="middle" class="text-[10px] font-bold fill-blue-800/60 italic tracking-wider">CuSO₄ 1M</text>
+                </g>
+
+                <!-- Electrodes (Polygons for seamless look) -->
+                <polygon id="zn-electrode" fill="#94a3b8" stroke="#64748b" stroke-width="1.5" />
+                <text x="195" y="130" text-anchor="middle" class="text-xs font-bold fill-slate-500 uppercase">Thanh Zn</text>
+                <text x="130" y="170" text-anchor="middle" class="text-sm font-black fill-rose-600">ANODE (–)</text>
+
+                <polygon id="cu-electrode" fill="#c2410c" stroke="#9a3412" stroke-width="1.5" />
+                <text x="605" y="130" text-anchor="middle" class="text-xs font-bold fill-amber-800 uppercase">Thanh Cu</text>
+                <text x="670" y="170" text-anchor="middle" class="text-sm font-black fill-indigo-700">CATHODE (+)</text>
+
+                <!-- Circuit -->
+                <path d="M 195 150 L 195 70 L 360 70" fill="none" stroke="#334155" stroke-width="3" stroke-linecap="round" />
+                <path d="M 440 70 L 605 70 L 605 150" fill="none" stroke="#334155" stroke-width="3" stroke-linecap="round" />
+                <circle cx="400" cy="70" r="40" fill="white" stroke="#1e293b" stroke-width="4" />
+                <text id="voltmeter-text" x="400" y="76" text-anchor="middle" class="text-lg font-black fill-slate-800 tracking-tighter">0.00<tspan font-size="10"> V</tspan></text>
+
+                <!-- Electron Flow -->
+                <g id="electron-flow" class="hidden">
+                    <circle r="5" fill="#facc15">
+                        <animateMotion path="M 195 150 L 195 70 L 605 70 L 605 150" dur="2.5s" repeatCount="indefinite" />
+                    </circle>
+                    <text x="300" y="55" class="text-[10px] font-bold fill-amber-600 animate-pulse-slow">Dòng e⁻ ⮕</text>
+                </g>
+
+                <!-- Ion Flow -->
+                <g id="ion-reactions" class="hidden">
+                    <circle cx="195" cy="280" r="7" fill="#f0f9ff" stroke="#0ea5e9" stroke-width="1">
+                        <animate attributeName="cy" from="280" to="360" dur="1.5s" repeatCount="indefinite" />
+                        <animate attributeName="opacity" from="1" to="0" dur="1.5s" repeatCount="indefinite" />
+                    </circle>
+                    <circle cx="540" cy="340" r="7" fill="#0ea5e9" opacity="0.6">
+                        <animate attributeName="cx" from="540" to="595" dur="2s" repeatCount="indefinite" />
+                        <animate attributeName="cy" from="340" to="310" dur="2s" repeatCount="indefinite" />
+                        <animate attributeName="opacity" from="0.8" to="0" dur="2s" repeatCount="indefinite" />
+                    </circle>
+                </g>
+
+                <!-- Reactions -->
+                <g id="equation-labels" class="hidden">
+                    <rect x="50" y="440" width="320" height="50" rx="12" fill="#fff1f2" stroke="#fda4af" stroke-width="1" />
+                    <text x="210" y="470" text-anchor="middle" class="text-xs font-bold fill-rose-700">Anode: Zn → Zn²⁺ + 2e⁻ (Bị rỗ bề mặt)</text>
+
+                    <rect x="430" y="440" width="320" height="50" rx="12" fill="#eef2ff" stroke="#c7d2fe" stroke-width="1" />
+                    <text x="590" y="470" text-anchor="middle" class="text-xs font-bold fill-indigo-700">Cathode: Cu²⁺ + 2e⁻ → Cu (Kết tinh xù xì)</text>
+                </g>
+            </svg>
+
+            <!-- Progress Indicator -->
+            <div class="absolute bottom-20 left-1/2 -translate-x-1/2 w-72 flex flex-col items-center gap-1">
+                <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                    <div id="progress-bar" class="h-full bg-gradient-to-r from-blue-500 to-indigo-600 w-0 transition-all duration-300"></div>
+                </div>
+                <span id="progress-text" class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Sẵn sàng (0%)</span>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="bg-slate-50 p-6 md:p-8 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <button id="btn-toggle" class="btn-transition flex items-center justify-center gap-3 px-8 py-4 rounded-2xl font-bold shadow-lg active:scale-95 bg-indigo-600 hover:bg-indigo-700 text-white">
+                <span id="btn-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                </span>
+                <span id="btn-text">Kích hoạt pin</span>
+            </button>
+
+            <button id="btn-reactions" class="btn-transition flex items-center justify-center gap-3 px-8 py-4 rounded-2xl font-bold shadow-lg active:scale-95 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                <span>Xem phương trình</span>
+            </button>
+            
+            <button id="btn-reset" class="sm:col-span-2 flex items-center justify-center gap-2 px-6 py-2 rounded-xl font-bold text-slate-400 hover:text-rose-500 transition-colors text-xs uppercase tracking-widest">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                Đặt lại (Làm mới pin)
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const simulationState = {
+            isRunning: false,
+            progress: 0,
+            showReactions: false
+        };
+
+        const config = {
+            electrodeTopY: 150,
+            solutionLevelY: 260,
+            electrodeBottomY: 350,
+            znCenterX: 195,
+            cuCenterX: 605,
+            halfWidth: 15
+        };
+
+        const elements = {
+            znElectrode: document.getElementById('zn-electrode'),
+            cuElectrode: document.getElementById('cu-electrode'),
+            progressBar: document.getElementById('progress-bar'),
+            progressText: document.getElementById('progress-text'),
+            voltmeterText: document.getElementById('voltmeter-text'),
+            electronFlow: document.getElementById('electron-flow'),
+            ionReactions: document.getElementById('ion-reactions'),
+            bridgeIons: document.getElementById('bridge-ions'),
+            equationLabels: document.getElementById('equation-labels'),
+            btnToggle: document.getElementById('btn-toggle'),
+            btnText: document.getElementById('btn-text'),
+            btnIcon: document.getElementById('btn-icon'),
+            btnReactions: document.getElementById('btn-reactions'),
+            btnReset: document.getElementById('btn-reset')
+        };
+
+        function updateElectrodes() {
+            const p = simulationState.progress;
+            
+            // Thanh Zn (Mòn sâu, tạo rỗ không đều)
+            const znPoints = [
+                `${config.znCenterX - config.halfWidth},${config.electrodeTopY}`,
+                `${config.znCenterX + config.halfWidth},${config.electrodeTopY}`,
+                `${config.znCenterX + config.halfWidth},${config.solutionLevelY}`,
+                // Điểm rỗ ngẫu nhiên dựa trên progress
+                `${config.znCenterX + config.halfWidth - (p * 0.15)},${config.solutionLevelY + 15}`,
+                `${config.znCenterX + config.halfWidth - (p * 0.35)},${config.solutionLevelY + 30}`,
+                `${config.znCenterX + config.halfWidth - (p * 0.1)},${config.solutionLevelY + 50}`,
+                `${config.znCenterX + config.halfWidth - (p * 0.4)},${config.solutionLevelY + 75}`,
+                `${config.znCenterX + config.halfWidth - (p * 0.2)},${config.electrodeBottomY}`,
+                `${config.znCenterX - config.halfWidth + (p * 0.25)},${config.electrodeBottomY}`,
+                `${config.znCenterX - config.halfWidth + (p * 0.4)},${config.solutionLevelY + 65}`,
+                `${config.znCenterX - config.halfWidth + (p * 0.05)},${config.solutionLevelY + 45}`,
+                `${config.znCenterX - config.halfWidth + (p * 0.3)},${config.solutionLevelY + 25}`,
+                `${config.znCenterX - config.halfWidth},${config.solutionLevelY}`
+            ].join(' ');
+
+            // Thanh Cu (Bám xù xì, bồi đắp cục bộ)
+            const cuPoints = [
+                `${config.cuCenterX - config.halfWidth},${config.electrodeTopY}`,
+                `${config.cuCenterX + config.halfWidth},${config.electrodeTopY}`,
+                `${config.cuCenterX + config.halfWidth},${config.solutionLevelY}`,
+                `${config.cuCenterX + config.halfWidth + (p * 0.25)},${config.solutionLevelY + 10}`,
+                `${config.cuCenterX + config.halfWidth + (p * 0.05)},${config.solutionLevelY + 25}`,
+                `${config.cuCenterX + config.halfWidth + (p * 0.4)},${config.solutionLevelY + 45}`,
+                `${config.cuCenterX + config.halfWidth + (p * 0.1)},${config.solutionLevelY + 70}`,
+                `${config.cuCenterX + config.halfWidth + (p * 0.3)},${config.electrodeBottomY}`,
+                `${config.cuCenterX - config.halfWidth - (p * 0.2)},${config.electrodeBottomY}`,
+                `${config.cuCenterX - config.halfWidth - (p * 0.4)},${config.solutionLevelY + 80}`,
+                `${config.cuCenterX - config.halfWidth - (p * 0.05)},${config.solutionLevelY + 55}`,
+                `${config.cuCenterX - config.halfWidth - (p * 0.35)},${config.solutionLevelY + 35}`,
+                `${config.cuCenterX - config.halfWidth - (p * 0.1)},${config.solutionLevelY + 15}`,
+                `${config.cuCenterX - config.halfWidth},${config.solutionLevelY}`
+            ].join(' ');
+
+            elements.znElectrode.setAttribute('points', znPoints);
+            elements.cuElectrode.setAttribute('points', cuPoints);
+            elements.progressBar.style.width = `${p}%`;
+            elements.progressText.textContent = `Tiến trình: ${Math.floor(p)}%`;
+            
+            if (simulationState.isRunning || p > 0) {
+                elements.voltmeterText.innerHTML = `1.10<tspan font-size="10"> V</tspan>`;
+            } else {
+                elements.voltmeterText.innerHTML = `0.00<tspan font-size="10"> V</tspan>`;
+            }
+        }
+
+        function toggleSimulation() {
+            if (simulationState.progress >= 100) return;
+            simulationState.isRunning = !simulationState.isRunning;
+            updateUI();
+        }
+
+        function updateUI() {
+            if (simulationState.isRunning) {
+                elements.btnText.textContent = "Tạm dừng pin";
+                elements.btnIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`;
+                elements.btnToggle.classList.replace('bg-indigo-600', 'bg-amber-500');
+                elements.btnToggle.classList.replace('hover:bg-indigo-700', 'hover:bg-amber-600');
+                elements.electronFlow.classList.remove('hidden');
+                elements.ionReactions.classList.remove('hidden');
+                elements.bridgeIons.classList.remove('hidden');
+            } else {
+                elements.btnText.textContent = simulationState.progress >= 100 ? "Pin đã cạn" : "Tiếp tục";
+                elements.btnIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`;
+                elements.btnToggle.classList.replace('bg-amber-500', 'bg-indigo-600');
+                elements.btnToggle.classList.replace('hover:bg-amber-600', 'hover:bg-indigo-700');
+                elements.electronFlow.classList.add('hidden');
+                elements.ionReactions.classList.add('hidden');
+                elements.bridgeIons.classList.add('hidden');
+                if (simulationState.progress >= 100) {
+                    elements.btnToggle.classList.add('opacity-50', 'cursor-not-allowed');
+                }
+            }
+        }
+
+        function simulationLoop() {
+            if (simulationState.isRunning && simulationState.progress < 100) {
+                // Tốc độ chậm lại cho thực tế (0.015 thay vì 0.05)
+                simulationState.progress += 0.015;
+                if (simulationState.progress >= 100) {
+                    simulationState.progress = 100;
+                    simulationState.isRunning = false;
+                    updateUI();
+                }
+                updateElectrodes();
+            }
+            requestAnimationFrame(simulationLoop);
+        }
+
+        elements.btnToggle.addEventListener('click', toggleSimulation);
+        elements.btnReactions.addEventListener('click', () => {
+            simulationState.showReactions = !simulationState.showReactions;
+            elements.equationLabels.classList.toggle('hidden');
+        });
+        elements.btnReset.addEventListener('click', () => {
+            simulationState.isRunning = false;
+            simulationState.progress = 0;
+            elements.equationLabels.classList.add('hidden');
+            elements.btnToggle.classList.remove('opacity-50', 'cursor-not-allowed');
+            updateUI();
+            updateElectrodes();
+        });
+
+        updateElectrodes();
+        simulationLoop();
+    </script>
+</body>
+</html>
